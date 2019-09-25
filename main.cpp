@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
 
 		data = (u_char*)(packet + ETHERNET_SIZE + ip_size + tcp_size);
 		data_size = header->caplen - (data-packet);
-		printf("---------------Data(Max 10 bytes)---------------\n");
+		printf("---------------Data(Max 32 bytes)---------------\n");
 		for(int i=0; i<32 && i<data_size; i++) printf("%02x ", data[i]);
 		printf("\n-----------------------------------------------\n\n\n");
 
