@@ -39,8 +39,6 @@ struct sniff_tcp {
 		u_short th_urp;
 };
 
-#define TH_OFF(th)	(((th)->th_offx2 & 0xf0) >> 4)
-
 void usage() {
   printf("syntax: pcap_test <interface>\n");
   printf("sample: pcap_test wlan0\n");
@@ -84,18 +82,27 @@ int main(int argc, char* argv[]) {
     if (res == -1 || res == -2) break;
 
 		struct sniff_ethernet * ethernet = (struct sniff_ethernet *)packet;
+		printf("Src Mac : %02x-%02x-%02x-%02x-%02x-%02x\n", ethernet->ether_shost[0],ethernet->ether_shost[1],ethernet->ether_shost[2],ethernet->ether_shost[3],ethernet->ether_shost[4],ethernet->ether_shost[5]);
+		printf("Dest Mac : %02x-%02x-%02x-%02x-%02x-%02x\n", ethernet->ether_dhost[0],ethernet->ether_dhost[1],ethernet->ether_dhost[2],ethernet->ether_dhost[3],ethernet->ether_dhost[4],ethernet->ether_dhost[5]);
 		if(ntohs(ethernet->ether_type) != TYPE_IPV4) continue;
 
 		struct sniff_ip * ip = (struct sniff_ip *)(packet + ETHERNET_SIZE);
-		ip_size = (((ip)->ip_vhl) & 0x0f)
+		ip_size = (((ip)->ip_vhl) & 0x0f);
+		printf("Src IP : %s\n", inet_ntoa(ip->ip_src));
+		printf("Dest IP : %s\n", inet_ntoa(ip->ip_dst));
 		if(ip->ip_p != TYPE_TCP) continue;
 
 		struct sniff_tcp * tcp = (struct sniff_tcp *)(packet + ETHERNET_SIZE + ip_size);
 		tcp_size = (((tcp)->th_offset & 0xf0) >> 4)*4;
+		printf("Src Port : %u\n\n", ntohs(tcp->th_sport));
+		printf("Dest Port : %u\n\n", ntohs(tcp->th_dport));
+
 		data = (u_char*)(packet + ETHERNET_SIZE + ip_size + tcp_size);
 		data_size = header->caplen - (data-packet);
+		printf("---------------Data(Max 10 bytes)---------------\n");
+		for(int i=0; i<32 && i<data_size; i++) printf("%02x ", data[i]);
+		printf("\n-----------------------------------------------\n\n\n");
 
-		print_packet_info(ethernet, ip, tcp, data, data_size);
   }
 
   pcap_close(handle);
